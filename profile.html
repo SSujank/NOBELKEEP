@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Profile — NOBLEKEEP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/global.css">
+<link rel="stylesheet" href="css/pages.css">
+<script src="js/data.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/nav.js"></script>
+</head>
+<body style="padding-top:var(--nav-h)">
+<main><div class="container container-sm">
+
+  <div class="page-header">
+    <h1>My Profile</h1>
+    <p>Your sovereign identity and account details.</p>
+  </div>
+
+  <!-- Avatar hero -->
+  <div class="profile-hero-card">
+    <div class="profile-avatar-lg" id="pp-avi">S</div>
+    <div>
+      <div class="profile-hero-name"  id="pp-name">—</div>
+      <div class="profile-hero-email" id="pp-email">—</div>
+      <div class="profile-badge">Sovereign Member</div>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-grid-4" style="margin-bottom:var(--sp-md)">
+    <div class="stat-card"><div class="stat-label">Health Score</div><div class="stat-value" id="pp-hs">—</div><div class="stat-sub">out of 100</div></div>
+    <div class="stat-card"><div class="stat-label">Total Spent</div><div class="stat-value" id="pp-spent">—</div><div class="stat-sub">this period</div></div>
+    <div class="stat-card"><div class="stat-label">Transactions</div><div class="stat-value" id="pp-tx">—</div><div class="stat-sub">recorded</div></div>
+    <div class="stat-card"><div class="stat-label">Goals</div><div class="stat-value" id="pp-goals">—</div><div class="stat-sub">active</div></div>
+  </div>
+
+  <!-- Edit form -->
+  <div class="card" style="margin-bottom:var(--sp-md)">
+    <div class="card-title">Update Profile</div>
+    <div style="display:flex;flex-direction:column;gap:var(--sp-sm)">
+      <div class="form-group">
+        <label>Display Name</label>
+        <input type="text" id="pp-edit-name" placeholder="Your display name">
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="pp-edit-email" disabled style="opacity:.5;cursor:not-allowed">
+      </div>
+      <div>
+        <button class="btn btn-gold" onclick="saveProfile()">Save Changes</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Danger zone -->
+  <div class="card" style="border-color:rgba(192,57,43,0.22)">
+    <div class="card-title" style="color:var(--danger)">Danger Zone</div>
+    <div style="display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-size:13.5px;font-weight:500">Clear All Transactions</div>
+          <div style="font-size:11.5px;color:var(--text3);margin-top:2px">Permanently delete all transaction history</div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="confirmClear()">Clear</button>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0">
+        <div>
+          <div style="font-size:13.5px;font-weight:500">Sign Out</div>
+          <div style="font-size:11.5px;color:var(--text3);margin-top:2px">Log out of your sovereign account</div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="doLogout()">Sign Out</button>
+      </div>
+    </div>
+  </div>
+
+</div></main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (!requireAuth()) return;
+  updateNavAuth();
+  populatePage();
+  checkSpendingBanner();
+});
+
+function populatePage() {
+  const u = Auth.user;
+  if (!u) return;
+  const init = (u.name||'S').charAt(0).toUpperCase();
+  document.getElementById('pp-avi').textContent       = init;
+  document.getElementById('pp-name').textContent      = u.name||'—';
+  document.getElementById('pp-email').textContent     = u.email||'—';
+  document.getElementById('pp-edit-name').value       = u.name||'';
+  document.getElementById('pp-edit-email').value      = u.email||'';
+  document.getElementById('pp-hs').textContent        = DM.healthScore();
+  document.getElementById('pp-spent').textContent     = fmt(DM.totalSpent());
+  document.getElementById('pp-tx').textContent        = DM.transactions.length;
+  document.getElementById('pp-goals').textContent     = DM.goals.length;
+}
+
+function saveProfile() {
+  const name = document.getElementById('pp-edit-name').value.trim();
+  if (!name) { toast('Please enter a display name.','error'); return; }
+  const u = Auth.user;
+  u.name = name;
+  localStorage.setItem('nk_user', JSON.stringify(u));
+  updateNavAuth();
+  populatePage();
+  toast('Profile updated.');
+}
+
+function confirmClear() {
+  showModal('Clear All Transactions',
+    `<p style="color:var(--text2);font-size:13.5px;line-height:1.7">Permanently delete all <strong style="color:var(--text)">${DM.transactions.length} transactions</strong>? This cannot be undone.</p>`,
+    [
+      {label:'Cancel',    cls:'btn-outline', fn:closeModal},
+      {label:'Clear All', cls:'btn-danger',  fn:()=>{
+        localStorage.removeItem('nk_tx');
+        closeModal(); populatePage();
+        toast('All transactions cleared.','error');
+        checkSpendingBanner();
+      }}
+    ]);
+}
+</script>
+</body>
+</html>

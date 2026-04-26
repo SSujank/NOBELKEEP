@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard— NOBLEKEEP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/global.css">
+<link rel="stylesheet" href="css/pages.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/data.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/nav.js"></script>
+<style>
+/* ── Dashboard-specific overrides ── */
+.dash-hero {
+  background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
+  border: 1px solid var(--border); border-radius: var(--r-xl);
+  padding: 1.75rem 2rem; margin-bottom: var(--sp-md);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 1.5rem;
+}
+.dash-hero-left h2 { font-size: 1.4rem; margin-bottom: 4px; }
+.dash-hero-left p  { font-size: 13px; color: var(--text2); }
+.dash-kpi-row { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+.kpi {
+  display: flex; flex-direction: column; gap: 2px;
+  min-width: 100px;
+}
+.kpi-val  { font-family: var(--font-mono); font-size: 1.4rem; font-weight: 500; color: var(--gold); line-height: 1; }
+.kpi-val.red   { color: var(--danger); }
+.kpi-val.green { color: var(--success); }
+.kpi-lbl  { font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); font-weight: 600; }
+.kpi-sep  { width: 1px; background: var(--border); align-self: stretch; }
+
+/* Budget ring */
+.budget-ring-card {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: var(--r-xl); padding: 1.5rem;
+  display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+}
+.budget-ring-vis { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
+.budget-ring-vis svg { transform: rotate(-90deg); }
+.budget-ring-label {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px;
+}
+.budget-ring-pct  { font-family: var(--font-mono); font-size: 1.4rem; font-weight: 500; color: var(--gold); line-height: 1; }
+.budget-ring-used { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); }
+.budget-ring-info { flex: 1; min-width: 150px; }
+.budget-ring-info h3 { font-size: 1rem; margin-bottom: var(--sp-sm); }
+.budget-detail-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.budget-detail-row:last-child { border-bottom: none; }
+.budget-detail-lbl { color: var(--text2); }
+.budget-detail-val { font-family: var(--font-mono); color: var(--text); }
+
+/* Form card */
+.form-card {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: var(--r-xl); padding: 1.5rem;
+  margin-bottom: var(--sp-md);
+}
+.form-card-title { font-family: var(--font-display); font-size: 1.05rem; font-weight: 500; margin-bottom: 1rem; }
+
+/* Goals full width */
+.goals-full { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--sp-sm); }
+.goal-pill {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--r-lg); padding: 1rem;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.goal-pill:hover { border-color: var(--gold-border); }
+.goal-pill-header { display: flex; justify-content: space-between; align-items: center; }
+.goal-pill-name { font-size: 13.5px; font-weight: 500; }
+.goal-pill-pct  { font-family: var(--font-mono); font-size: 12px; color: var(--text3); }
+.goal-pill-amounts { display: flex; justify-content: space-between; font-size: 11px; color: var(--text3); margin-top: 4px; }
+.goal-pill-actions { display: flex; gap: 6px; margin-top: 4px; }
+
+/* Health card */
+.health-card {
+  background: var(--bg1); border: 1px solid var(--border);
+  border-radius: var(--r-xl); padding: 1.5rem; text-align: center;
+}
+.health-big  { font-family: var(--font-mono); font-size: 3.5rem; font-weight: 500; color: var(--gold); line-height: 1; }
+.health-lbl  { font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: var(--text3); margin: 6px 0 12px; }
+.health-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 1rem; }
+.hf { background: var(--bg2); border-radius: var(--r); padding: 8px; text-align: center; }
+.hf-val { font-family: var(--font-mono); font-size: 14px; color: var(--text); }
+.hf-lbl { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-top: 2px; }
+
+/* Main grid */
+.dash-main-grid { display: grid; grid-template-columns: 1fr 320px; gap: var(--sp-md); }
+
+@media(max-width: 900px) {
+  .dash-main-grid { grid-template-columns: 1fr; }
+  .dash-kpi-row   { gap: 1rem; }
+  .kpi-sep        { display: none; }
+}
+@media(max-width: 560px) {
+  .dash-hero { padding: 1.25rem; }
+  .budget-ring-card { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body style="padding-top:var(--nav-h)">
+<main><div class="container">
+
+  <!-- Hero KPI bar -->
+  <div class="dash-hero">
+    <div class="dash-hero-left">
+      <h2 id="dash-greeting">Sovereign Command Centre</h2>
+      <p>Your kingdom's finances at a glance.</p>
+    </div>
+    <div class="dash-kpi-row">
+      <div class="kpi"><div class="kpi-val" id="kpi-spent">—</div><div class="kpi-lbl">Total Spent</div></div>
+      <div class="kpi-sep"></div>
+      <div class="kpi"><div class="kpi-val" id="kpi-left">—</div><div class="kpi-lbl">Budget Left</div></div>
+      <div class="kpi-sep"></div>
+      <div class="kpi"><div class="kpi-val" id="kpi-avg">—</div><div class="kpi-lbl">Daily Avg</div></div>
+      <div class="kpi-sep"></div>
+      <div class="kpi"><div class="kpi-val" id="kpi-tx">—</div><div class="kpi-lbl">Transactions</div></div>
+    </div>
+  </div>
+
+  <!-- Main grid -->
+  <div class="dash-main-grid">
+
+    <!-- Left column -->
+    <div style="display:flex;flex-direction:column;gap:var(--sp-md)">
+
+      <!-- Add / Edit form -->
+      <div class="form-card" id="expense-form-card">
+        <div class="form-card-title" id="form-title">Add New Transaction</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Date</label>
+            <input type="date" id="exp-date">
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="exp-cat">
+              <option value="">Select Category</option>
+              <option value="Food">Food &amp; Dining</option>
+              <option value="Transportation">Transportation</option>
+              <option value="Shopping">Shopping</option>
+              <option value="Entertainment">Entertainment</option>
+              <option value="Utilities">Utilities</option>
+              <option value="Savings">Savings</option>
+              <option value="Investment">Investment</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Amount ($)</label>
+            <input type="number" id="exp-amount" step="0.01" min="0.01" placeholder="0.00">
+          </div>
+        </div>
+        <div class="form-group" style="margin-top:var(--sp-sm)">
+          <label>Description (optional)</label>
+          <input type="text" id="exp-desc" placeholder="What was this for?">
+        </div>
+        <div style="display:flex;gap:10px;margin-top:var(--sp-md);align-items:center;flex-wrap:wrap">
+          <button class="btn btn-gold" id="exp-submit" onclick="submitExpense()">Add to Ledger</button>
+          <button class="btn btn-outline" id="exp-cancel" onclick="cancelEdit()" style="display:none">Cancel Edit</button>
+          <span id="exp-err" style="font-size:12.5px;color:var(--danger);display:none"></span>
+        </div>
+      </div>
+
+      <!-- Budget ring + details -->
+      <div class="budget-ring-card">
+        <div class="budget-ring-vis">
+          <svg width="120" height="120" viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="50" fill="none" stroke="var(--bg3)" stroke-width="12"/>
+            <circle id="ring-progress" cx="60" cy="60" r="50" fill="none" stroke="var(--gold)" stroke-width="12"
+              stroke-linecap="round" stroke-dasharray="314" stroke-dashoffset="314"/>
+          </svg>
+          <div class="budget-ring-label">
+            <div class="budget-ring-pct" id="ring-pct">0%</div>
+            <div class="budget-ring-used">used</div>
+          </div>
+        </div>
+        <div class="budget-ring-info">
+          <h3>Monthly Budget</h3>
+          <div class="budget-detail-row"><span class="budget-detail-lbl">Budget</span><span class="budget-detail-val" id="bd-budget">—</span></div>
+          <div class="budget-detail-row"><span class="budget-detail-lbl">Spent</span><span class="budget-detail-val" id="bd-spent">—</span></div>
+          <div class="budget-detail-row"><span class="budget-detail-lbl">Remaining</span><span class="budget-detail-val" id="bd-left">—</span></div>
+          <div class="budget-detail-row"><span class="budget-detail-lbl">Health Score</span><span class="budget-detail-val" id="bd-hs">—</span></div>
+          <div style="display:flex;gap:8px;margin-top:var(--sp-sm)">
+            <button class="btn btn-sm btn-outline" onclick="openBudgetModal()">Change Budget</button>
+            <a href="reports.html" class="btn btn-sm btn-ghost">Full Report →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category chart -->
+      <div class="card">
+        <div class="card-header"><span class="card-title" style="margin-bottom:0">Spending by Category</span></div>
+        <div id="cat-chart-wrap"><canvas id="d-cat-chart" height="220"></canvas></div>
+      </div>
+
+      <!-- Transactions table -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title" style="margin-bottom:0">All Transactions</span>
+          <select id="filter-cat" onchange="renderTx()" style="background:var(--bg2);border:1px solid var(--border-md);color:var(--text2);padding:5px 26px 5px 10px;border-radius:var(--r);font-size:12px;font-family:var(--font-body);cursor:pointer;appearance:none;background-image:url('data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 width=%2710%27 height=%2710%27 viewBox=%270 0 12 12%27%3E%3Cpath fill=%27%23888%27 d=%27M6 8L1 3h10z%27/%3E%3C/svg%3E');background-repeat:no-repeat;background-position:right 7px center;outline:none">
+            <option value="">All Categories</option>
+            <option value="Food">Food</option>
+            <option value="Transportation">Transportation</option>
+            <option value="Shopping">Shopping</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Utilities">Utilities</option>
+            <option value="Savings">Savings</option>
+            <option value="Investment">Investment</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="table-wrap" style="border:none;border-top:1px solid var(--border);border-radius:0 0 var(--r-lg) var(--r-lg)">
+          <table>
+            <thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Actions</th></tr></thead>
+            <tbody id="tx-body"></tbody>
+          </table>
+        </div>
+        <p id="no-tx" style="text-align:center;padding:2rem;color:var(--text3);font-size:13px;display:none">No transactions found. Add your first expense above.</p>
+      </div>
+
+    </div>
+
+    <!-- Right sidebar -->
+    <div style="display:flex;flex-direction:column;gap:var(--sp-md)">
+
+      <!-- Health score -->
+      <div class="health-card">
+        <div class="label label-gold" style="margin-bottom:var(--sp-sm)">Financial Health</div>
+        <div class="health-big" id="health-num">—</div>
+        <div class="health-lbl">out of 100</div>
+        <div class="progress-track"><div class="progress-fill rainbow" id="health-bar" style="width:0%"></div></div>
+        <div class="health-facts">
+          <div class="hf"><div class="hf-val" id="hf-sr">—</div><div class="hf-lbl">Savings Rate</div></div>
+          <div class="hf"><div class="hf-val" id="hf-cats">—</div><div class="hf-lbl">Categories</div></div>
+          <div class="hf"><div class="hf-val" id="hf-apd">—</div><div class="hf-lbl">Daily Avg</div></div>
+          <div class="hf"><div class="hf-val" id="hf-tx">—</div><div class="hf-lbl">Transactions</div></div>
+        </div>
+        <a href="ai.html" class="btn btn-sm btn-outline" style="width:100%;justify-content:center;margin-top:var(--sp-sm)">Get AI Advice →</a>
+      </div>
+
+      <!-- Goals -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title" style="margin-bottom:0">Financial Goals</span>
+          <button class="btn btn-sm btn-gold" onclick="openGoalModal()">+ Add Goal</button>
+        </div>
+        <div class="goals-full" id="goals-container" style="margin-top:var(--sp-sm)"></div>
+        <p id="no-goals" style="color:var(--text3);font-size:13px;padding:var(--sp-sm) 0;display:none">No goals yet. Click + Add Goal to get started.</p>
+      </div>
+
+      <!-- Quick links -->
+      <div class="card" style="padding:var(--sp-sm)">
+        <div class="label" style="padding:4px 4px var(--sp-sm)">Quick Links</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <a href="reports.html" class="module-tile"><div class="module-tile-icon">◉</div><div><div class="module-tile-label">Full Reports</div><div class="module-tile-desc">Charts &amp; analytics</div></div></a>
+          <a href="ai.html"     class="module-tile"><div class="module-tile-icon">♛</div><div><div class="module-tile-label">AI Advisor</div><div class="module-tile-desc">Get personalised tips</div></div></a>
+          <a href="alerts.html" class="module-tile"><div class="module-tile-icon">⚠</div><div><div class="module-tile-label">Spending Alerts</div><div class="module-tile-desc">Budget limit controls</div></div></a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div></main>
+
+<script>
+let editingId = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!requireAuth()) return;
+  updateNavAuth();
+
+  // Greeting
+  const h = new Date().getHours();
+  const t = h<12?'morning':h<18?'afternoon':'evening';
+  const u = Auth.user;
+  document.getElementById('dash-greeting').textContent = `Good ${t}, ${u?.name||'Sovereign'}`;
+
+  document.getElementById('exp-date').value = new Date().toISOString().split('T')[0];
+  refreshAll();
+  checkSpendingBanner();
+});
+
+function refreshAll() {
+  const ts=DM.totalSpent(), bl=DM.budgetLeft(), pct=DM.percentUsed(),
+        hs=DM.healthScore(), apd=DM.avgPerDay(), txLen=DM.transactions.length;
+  const sr=Math.max(0,(DM.budget-ts)/DM.budget*100);
+
+  // Hero KPIs
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  set('kpi-spent', fmt(ts));
+  const leftEl = document.getElementById('kpi-left');
+  if(leftEl){leftEl.textContent=fmt(bl);leftEl.className='kpi-val'+(bl<0?' red':bl<DM.budget*0.15?' orange':'');}
+  set('kpi-avg', fmt(apd));
+  set('kpi-tx', txLen);
+
+  // Budget ring
+  const circ = 2*Math.PI*50; // 314.16
+  const offset = circ - Math.min(pct/100,1)*circ;
+  const ring = document.getElementById('ring-progress');
+  if(ring){
+    ring.style.strokeDashoffset = offset.toFixed(1);
+    ring.style.stroke = pct>=100?'var(--danger)':pct>=80?'var(--warning)':'var(--gold)';
+  }
+  set('ring-pct', fmtPct(pct));
+  set('bd-budget', fmt(DM.budget));
+  set('bd-spent', fmt(ts));
+  set('bd-left', fmt(bl));
+  set('bd-hs', hs+' / 100');
+
+  // Health card
+  set('health-num', hs);
+  const hb=document.getElementById('health-bar');if(hb)hb.style.width=hs+'%';
+  set('hf-sr', fmtPct(sr));
+  set('hf-cats', Object.keys(DM.categoryTotals()).length);
+  set('hf-apd', fmt(apd));
+  set('hf-tx', txLen);
+
+  // Charts & goals & transactions
+  renderTx();
+  renderGoals();
+  makeDoughnut('d-cat-chart', DM.categoryTotals());
+  checkSpendingBanner();
+}
+
+function renderTx() {
+  const cat = document.getElementById('filter-cat').value;
+  const txs = cat ? DM.transactions.filter(t=>t.category===cat) : DM.transactions;
+  const body = document.getElementById('tx-body');
+  const none = document.getElementById('no-tx');
+  body.innerHTML = '';
+  if (!txs.length) { none.style.display='block'; return; }
+  none.style.display = 'none';
+  txs.forEach(tx => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td style="color:var(--text3);font-size:12px;white-space:nowrap">${tx.date}</td>
+      <td>${categoryBadge(tx.category)}</td>
+      <td style="color:var(--text2);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${tx.description||'—'}</td>
+      <td class="mono">${fmt(tx.amount)}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-sm btn-outline" onclick="startEdit(${tx.id})" style="margin-right:5px">Edit</button>
+        <button class="btn btn-sm btn-danger" onclick="confirmDelete(${tx.id})">Delete</button>
+      </td>`;
+    body.appendChild(tr);
+  });
+}
+
+function submitExpense() {
+  const date = document.getElementById('exp-date').value;
+  const cat  = document.getElementById('exp-cat').value;
+  const amt  = parseFloat(document.getElementById('exp-amount').value);
+  const desc = document.getElementById('exp-desc').value.trim();
+  const err  = document.getElementById('exp-err');
+  err.style.display = 'none';
+  if (!date) { err.textContent='Please select a date.'; err.style.display='inline'; return; }
+  if (!cat)  { err.textContent='Please select a category.'; err.style.display='inline'; return; }
+  if (!amt||amt<=0||isNaN(amt)) { err.textContent='Please enter a valid amount greater than 0.'; err.style.display='inline'; return; }
+
+  if (editingId !== null) {
+    DM.updateTransaction(editingId, {date, category:cat, amount:amt, description:desc});
+    editingId = null;
+    document.getElementById('form-title').textContent   = 'Add New Transaction';
+    document.getElementById('exp-submit').textContent   = 'Add to Ledger';
+    document.getElementById('exp-cancel').style.display = 'none';
+    toast('Transaction updated.');
+  } else {
+    DM.addTransaction({date, category:cat, amount:amt, description:desc});
+    toast('Transaction added successfully.');
+  }
+  // Reset form
+  document.getElementById('exp-date').value   = new Date().toISOString().split('T')[0];
+  document.getElementById('exp-cat').value    = '';
+  document.getElementById('exp-amount').value = '';
+  document.getElementById('exp-desc').value   = '';
+  refreshAll();
+}
+
+function startEdit(id) {
+  const tx = DM.transactions.find(t=>t.id==id);
+  if (!tx) return;
+  document.getElementById('exp-date').value   = tx.date;
+  document.getElementById('exp-cat').value    = tx.category;
+  document.getElementById('exp-amount').value = tx.amount;
+  document.getElementById('exp-desc').value   = tx.description||'';
+  editingId = id;
+  document.getElementById('form-title').textContent   = 'Edit Transaction';
+  document.getElementById('exp-submit').textContent   = 'Save Changes';
+  document.getElementById('exp-cancel').style.display = 'inline-flex';
+  document.getElementById('expense-form-card').scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function cancelEdit() {
+  editingId = null;
+  document.getElementById('form-title').textContent   = 'Add New Transaction';
+  document.getElementById('exp-submit').textContent   = 'Add to Ledger';
+  document.getElementById('exp-cancel').style.display = 'none';
+  document.getElementById('exp-date').value           = new Date().toISOString().split('T')[0];
+  document.getElementById('exp-cat').value            = '';
+  document.getElementById('exp-amount').value         = '';
+  document.getElementById('exp-desc').value           = '';
+  document.getElementById('exp-err').style.display    = 'none';
+}
+
+function confirmDelete(id) {
+  const tx = DM.transactions.find(t=>t.id==id);
+  showModal('Delete Transaction',
+    `<p style="color:var(--text2);font-size:13.5px;line-height:1.75">Are you sure you want to delete<br><strong style="color:var(--text)">"${tx?.description||tx?.category||'this transaction'}"</strong> (${fmt(tx?.amount||0)})?</p>`,
+    [
+      {label:'Cancel', cls:'btn-outline', fn:closeModal},
+      {label:'Delete', cls:'btn-danger',  fn:()=>{ DM.deleteTransaction(id); closeModal(); refreshAll(); toast('Transaction deleted.','error'); }}
+    ]);
+}
+
+function openBudgetModal() {
+  showModal('Set Monthly Budget',
+    `<div class="form-group"><label>New Budget Amount</label>
+     <input type="number" id="new-budget" value="${DM.budget}" min="1" step="50"
+       style="background:var(--bg2);border:1px solid var(--border-md);color:var(--text);padding:9px 13px;border-radius:var(--r);font-size:14px;width:100%;font-family:var(--font-body)">
+    </div>`,
+    [
+      {label:'Cancel',      cls:'btn-outline', fn:closeModal},
+      {label:'Save Budget', cls:'btn-gold',    fn:()=>{
+        const v=parseFloat(document.getElementById('new-budget').value);
+        if(!v||v<=0||isNaN(v)){return;}
+        DM.saveBudget(v); closeModal(); refreshAll();
+        toast('Budget updated to '+fmt(v)+'.');
+      }}
+    ]);
+  setTimeout(()=>document.getElementById('new-budget')?.focus(),60);
+}
+
+function openGoalModal(editId) {
+  const isEdit = editId !== undefined;
+  const existing = isEdit ? DM.goals.find(g=>g.id==editId) : null;
+
+  const fi=(id,lbl,ph,type='text',val='')=>
+    `<div class="form-group"><label>${lbl}</label>
+     <input type="${type}" id="${id}" placeholder="${ph}" value="${val}"
+       style="background:var(--bg2);border:1px solid var(--border-md);color:var(--text);
+              padding:9px 13px;border-radius:var(--r);font-size:13.5px;width:100%;font-family:var(--font-body)">
+    </div>`;
+
+  showModal(isEdit?'Edit Goal':'Add Financial Goal',
+    `<div style="display:flex;flex-direction:column;gap:var(--sp-sm)">
+      ${fi('g-name',   'Goal Name',         'e.g. Emergency Fund',     'text',   existing?.name||'')}
+      ${fi('g-target', 'Target Amount ($)',  '10000',                   'number', existing?.target||'')}
+      ${fi('g-current','Current Saved ($)',  '0',                       'number', existing?.current||0)}
+    </div>`,
+    [
+      {label:'Cancel',                  cls:'btn-outline', fn:closeModal},
+      {label:isEdit?'Save Changes':'Add Goal', cls:'btn-gold', fn:()=>{
+        const name   = document.getElementById('g-name').value.trim();
+        const target = parseFloat(document.getElementById('g-target').value);
+        const cur    = parseFloat(document.getElementById('g-current').value)||0;
+        if (!name)         { toast('Please enter a goal name.','error');     return; }
+        if (!target||target<=0||isNaN(target)) { toast('Please enter a valid target amount.','error'); return; }
+        if (cur<0)         { toast('Current amount cannot be negative.','error'); return; }
+
+        const goals = DM.goals;
+        if (isEdit) {
+          const i = goals.findIndex(g=>g.id==editId);
+          if(i!==-1){ goals[i]={...goals[i],name,target,current:cur}; }
+        } else {
+          goals.push({id:Date.now(), name, target, current:cur});
+        }
+        DM.saveGoals(goals);
+        closeModal();
+        renderGoals();
+        toast(isEdit?'Goal updated.':'Goal added: '+name);
+      }}
+    ]);
+  setTimeout(()=>document.getElementById('g-name')?.focus(),60);
+}
+
+function deleteGoal(id) {
+  showModal('Delete Goal',
+    `<p style="color:var(--text2);font-size:13.5px;line-height:1.75">Delete this goal? This cannot be undone.</p>`,
+    [
+      {label:'Cancel', cls:'btn-outline', fn:closeModal},
+      {label:'Delete', cls:'btn-danger',  fn:()=>{
+        DM.saveGoals(DM.goals.filter(g=>g.id!=id));
+        closeModal(); renderGoals();
+        toast('Goal deleted.','error');
+      }}
+    ]);
+}
+
+function renderGoals() {
+  const goals = DM.goals;
+  const el    = document.getElementById('goals-container');
+  const none  = document.getElementById('no-goals');
+  if (!goals.length) {
+    el.innerHTML = '';
+    none.style.display='block';
+    return;
+  }
+  none.style.display='none';
+  el.innerHTML = goals.map(g => {
+    const p    = Math.min(100, Math.round((g.current/g.target)*100));
+    const done = g.current >= g.target;
+    const col  = done ? 'green' : p>=80 ? '' : '';
+    return `<div class="goal-pill">
+      <div class="goal-pill-header">
+        <span class="goal-pill-name">${g.name}${done?' ✓':''}</span>
+        <span class="goal-pill-pct">${p}%</span>
+      </div>
+      <div class="progress-track" style="height:5px"><div class="progress-fill ${col}" style="width:${p}%"></div></div>
+      <div class="goal-pill-amounts">
+        <span>${fmt(g.current)} saved</span>
+        <span>${fmt(g.target)} target</span>
+      </div>
+      <div class="goal-pill-actions">
+        <button class="btn btn-sm btn-outline" onclick="openGoalModal(${g.id})" style="flex:1">Edit</button>
+        <button class="btn btn-sm btn-danger"  onclick="deleteGoal(${g.id})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>

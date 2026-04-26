@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alerts — NOBLEKEEP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/global.css">
+<link rel="stylesheet" href="css/pages.css">
+<script src="js/data.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/nav.js"></script>
+<style>
+.alert-control-grid { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-md); margin-bottom:var(--sp-md); }
+.global-limits-card,.cat-limits-card { background:var(--bg1); border:1px solid var(--border); border-radius:var(--r-xl); padding:1.5rem; }
+.global-toggle { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); }
+.global-toggle:last-child { border-bottom:none; }
+.gt-info h4 { font-size:13.5px; font-weight:500; margin-bottom:2px; }
+.gt-info p  { font-size:11.5px; color:var(--text3); }
+.toggle-switch { position:relative; width:42px; height:22px; flex-shrink:0; }
+.toggle-switch input { opacity:0; width:0; height:0; }
+.toggle-track {
+  position:absolute; inset:0; background:var(--bg3); border-radius:99px;
+  cursor:pointer; transition:background .2s;
+  border:1px solid var(--border-md);
+}
+.toggle-track::before {
+  content:''; position:absolute; width:16px; height:16px; left:2px; top:2px;
+  background:var(--text2); border-radius:50%; transition:transform .2s;
+}
+input:checked + .toggle-track { background:var(--gold); }
+input:checked + .toggle-track::before { transform:translateX(20px); background:#000; }
+.limit-row2 { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--border); }
+.limit-row2:last-child { border-bottom:none; }
+.limit-row2-left h4 { font-size:13px; font-weight:500; }
+.limit-row2-left p  { font-size:11px; color:var(--text3); margin-top:2px; }
+.limit-input2 { background:var(--bg2); border:1px solid var(--border-md); border-radius:var(--r); color:var(--text); padding:6px 10px; font-size:13px; width:110px; text-align:right; font-family:var(--font-mono); }
+.limit-input2:focus { outline:none; border-color:var(--gold); }
+.alert-card2 { background:var(--bg1); border:1px solid var(--border); border-radius:var(--r-lg); padding:1rem 1.25rem; display:flex; align-items:flex-start; gap:var(--sp-sm); margin-bottom:10px; }
+.alert-card2.urgent { border-left:3px solid var(--danger); }
+.alert-card2.warn   { border-left:3px solid var(--warning); }
+.alert-card2.ok     { border-left:3px solid var(--success); }
+.alert-card2.info   { border-left:3px solid var(--gold); }
+.a2-icon  { font-size:18px; flex-shrink:0; margin-top:1px; }
+.a2-body  { flex:1; }
+.a2-title { font-size:13.5px; font-weight:600; color:var(--text); }
+.a2-desc  { font-size:12px; color:var(--text2); margin-top:3px; line-height:1.55; }
+.a2-ts    { font-size:10.5px; color:var(--text3); margin-top:4px; }
+.dismiss2 { background:none; border:1px solid var(--border); border-radius:var(--r); color:var(--text3); cursor:pointer; font-size:11px; padding:3px 9px; font-family:var(--font-body); flex-shrink:0; transition:all .2s; }
+.dismiss2:hover { border-color:var(--gold-border); color:var(--gold); }
+@media(max-width:760px) { .alert-control-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body style="padding-top:var(--nav-h)">
+<main><div class="container">
+
+  <div class="page-header">
+    <h1>Spending Alerts</h1>
+    <p>Set category budget limits and control when you get notified.</p>
+  </div>
+
+  <div class="alert-control-grid">
+
+    <!-- Global alert toggles -->
+    <div class="global-limits-card">
+      <div class="card-title">Alert Settings</div>
+      <div class="global-toggle">
+        <div class="gt-info"><h4>Overall Budget Alerts</h4><p>Alert when total budget reaches 80% or 100%</p></div>
+        <label class="toggle-switch"><input type="checkbox" id="tog-overall" checked onchange="saveToggles()"><span class="toggle-track"></span></label>
+      </div>
+      <div class="global-toggle">
+        <div class="gt-info"><h4>Category Limit Alerts</h4><p>Alert when any category reaches its spending cap</p></div>
+        <label class="toggle-switch"><input type="checkbox" id="tog-category" checked onchange="saveToggles()"><span class="toggle-track"></span></label>
+      </div>
+      <div class="global-toggle">
+        <div class="gt-info"><h4>Health Score Alerts</h4><p>Alert when financial health score drops below 50</p></div>
+        <label class="toggle-switch"><input type="checkbox" id="tog-health" checked onchange="saveToggles()"><span class="toggle-track"></span></label>
+      </div>
+      <div class="global-toggle">
+        <div class="gt-info"><h4>Positive Alerts</h4><p>Show congratulatory alerts when under 50% budget</p></div>
+        <label class="toggle-switch"><input type="checkbox" id="tog-positive" checked onchange="saveToggles()"><span class="toggle-track"></span></label>
+      </div>
+      <div style="margin-top:var(--sp-md)">
+        <button class="btn btn-outline btn-sm" onclick="DM.clearDismissed();renderAlerts();toast('Alerts reset.')">Reset Dismissed Alerts</button>
+      </div>
+    </div>
+
+    <!-- Category limits -->
+    <div class="cat-limits-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-sm)">
+        <span class="card-title" style="margin-bottom:0">Category Budget Limits</span>
+        <button class="btn btn-gold btn-sm" onclick="saveLimits()">Save Limits</button>
+      </div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:var(--sp-sm)">Set monthly cap per category. Leave blank for no limit.</p>
+      <div id="limits-list"></div>
+    </div>
+
+  </div>
+
+  <!-- Active alerts -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--sp-sm)">
+    <h2 style="font-size:1.2rem">Active Alerts</h2>
+    <button class="btn btn-outline btn-sm" onclick="dismissAll()">Dismiss All</button>
+  </div>
+  <div id="alerts-col"></div>
+  <div id="no-alerts" style="display:none;text-align:center;padding:3rem;color:var(--text3);font-size:13.5px">
+    <div style="font-size:2rem;margin-bottom:var(--sp-sm)">✓</div>
+    No active alerts — your finances are on track!
+  </div>
+
+</div></main>
+
+<script>
+const CATS = ['Food','Transportation','Shopping','Entertainment','Utilities','Savings','Investment','Other'];
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (!requireAuth()) return;
+  updateNavAuth();
+  loadToggles();
+  renderLimits();
+  renderAlerts();
+  checkSpendingBanner();
+});
+
+function loadToggles() {
+  try {
+    const t = JSON.parse(localStorage.getItem('nk_toggles')||'{}');
+    ['overall','category','health','positive'].forEach(k => {
+      const el = document.getElementById('tog-'+k);
+      if(el && t[k]!==undefined) el.checked = t[k];
+    });
+  } catch(e) {}
+}
+
+function saveToggles() {
+  const t = {};
+  ['overall','category','health','positive'].forEach(k => {
+    const el = document.getElementById('tog-'+k);
+    if(el) t[k] = el.checked;
+  });
+  localStorage.setItem('nk_toggles', JSON.stringify(t));
+  renderAlerts();
+}
+
+function getToggles() {
+  try { return JSON.parse(localStorage.getItem('nk_toggles')||'{}'); }
+  catch(e) { return {}; }
+}
+
+function renderLimits() {
+  const limits = DM.budgetLimits;
+  const totals = DM.categoryTotals();
+  document.getElementById('limits-list').innerHTML = CATS.map(c => {
+    const spent = (totals[c]||0);
+    const lim   = limits[c];
+    const pct   = lim ? Math.round(spent/lim*100) : 0;
+    const warn  = lim && pct>=80 ? (pct>=100?'color:var(--danger)':'color:var(--warning)') : 'color:var(--text3)';
+    return `<div class="limit-row2">
+      <div class="limit-row2-left">
+        <h4>${c}</h4>
+        <p>Spent: <span style="${warn}">${fmt(spent)}${lim?' / '+fmt(lim)+' ('+pct+'%)':''}</span></p>
+      </div>
+      <input type="number" class="limit-input2" id="lim-${c}"
+        value="${lim||''}" placeholder="No limit" min="0" step="10">
+    </div>`;
+  }).join('');
+}
+
+function saveLimits() {
+  const l = {};
+  CATS.forEach(c => {
+    const v = parseFloat(document.getElementById('lim-'+c)?.value);
+    if(v>0) l[c] = v;
+  });
+  DM.saveBudgetLimits(l);
+  DM.clearDismissed();
+  renderLimits();
+  renderAlerts();
+  checkSpendingBanner();
+  toast('Budget limits saved successfully.');
+}
+
+function buildAlerts() {
+  const tog = getToggles();
+  const alerts = [];
+  const pct = DM.percentUsed(), totals = DM.categoryTotals(), limits = DM.budgetLimits;
+  const now = new Date().toLocaleString();
+
+  // Overall budget
+  if(tog.overall !== false) {
+    if(pct>=100) alerts.push({key:'overall-100',type:'urgent',icon:'⛔',title:'Budget Exceeded',desc:`You've spent ${fmtPct(pct)} of your monthly budget (${fmt(DM.totalSpent())} of ${fmt(DM.budget)}).`,time:now});
+    else if(pct>=80) alerts.push({key:'overall-80',type:'warn',icon:'⚠',title:'Approaching Budget Limit',desc:`${fmtPct(pct)} of your monthly budget used. Only ${fmt(DM.budgetLeft())} remaining.`,time:now});
+  }
+
+  // Category limits
+  if(tog.category !== false) {
+    CATS.forEach(c => {
+      const spent=totals[c]||0, lim=limits[c];
+      if(!lim) return;
+      const cp=Math.round(spent/lim*100);
+      if(cp>=100) alerts.push({key:`cat-100-${c}`,type:'urgent',icon:'⛔',title:`${c} Limit Exceeded`,desc:`Spent ${fmt(spent)} in ${c}, exceeding your ${fmt(lim)} limit by ${fmt(spent-lim)}.`,time:now});
+      else if(cp>=80) alerts.push({key:`cat-80-${c}`,type:'warn',icon:'⚠',title:`${c} Approaching Limit`,desc:`${c} is at ${cp}% of your ${fmt(lim)} limit (${fmt(spent)} spent).`,time:now});
+    });
+  }
+
+  // Health score
+  if(tog.health !== false) {
+    const hs=DM.healthScore();
+    if(hs<50) alerts.push({key:'health-low',type:'urgent',icon:'💔',title:'Low Financial Health Score',desc:`Your score is ${hs}/100. Reduce spending and build up your savings rate.`,time:now});
+    else if(hs<70) alerts.push({key:'health-mid',type:'info',icon:'💛',title:'Health Score Needs Attention',desc:`Score of ${hs}/100 is below ideal. Aim for 70+ by improving budget adherence.`,time:now});
+  }
+
+  // Positive
+  if(tog.positive !== false && pct<50 && DM.transactions.length>0) {
+    alerts.push({key:'on-track',type:'ok',icon:'✓',title:'On Track — Excellent Discipline',desc:`You've only used ${fmtPct(pct)} of your budget. Keep it up!`,time:now});
+  }
+
+  return alerts;
+}
+
+function renderAlerts() {
+  const all=buildAlerts(), dismissed=DM.dismissedAlerts;
+  const active=all.filter(a=>!dismissed.includes(a.key));
+  const col=document.getElementById('alerts-col');
+  const none=document.getElementById('no-alerts');
+  if(!active.length){col.innerHTML='';none.style.display='block';return;}
+  none.style.display='none';
+  col.innerHTML=active.map(a=>`
+    <div class="alert-card2 ${a.type}">
+      <div class="a2-icon">${a.icon}</div>
+      <div class="a2-body">
+        <div class="a2-title">${a.title}</div>
+        <div class="a2-desc">${a.desc}</div>
+        <div class="a2-ts">${a.time}</div>
+      </div>
+      <button class="dismiss2" onclick="dismissOne('${a.key}')">Dismiss</button>
+    </div>`).join('');
+}
+
+function dismissOne(key){DM.dismissAlert(key);renderAlerts();}
+function dismissAll(){buildAlerts().forEach(a=>DM.dismissAlert(a.key));renderAlerts();toast('All alerts dismissed.');}
+</script>
+</body>
+</html>

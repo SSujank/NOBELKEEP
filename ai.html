@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Advisor — NOBLEKEEP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/global.css">
+<link rel="stylesheet" href="css/pages.css">
+<script src="js/data.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/nav.js"></script>
+<script src="js/media.js"></script>
+</head>
+<body style="padding-top:var(--nav-h)">
+<main><div class="container container-md">
+
+  <div class="page-header">
+    <h1>AI Financial Advisor</h1>
+    <p>Your personal sovereign wealth counsel — ask anything about your finances.</p>
+  </div>
+
+  <!-- Quick chips -->
+  <div class="chips-row" style="margin-bottom:var(--sp-md)">
+    <button class="chip" onclick="ask('How is my budget looking?')">How is my budget?</button>
+    <button class="chip" onclick="ask('Where am I overspending?')">Where am I overspending?</button>
+    <button class="chip" onclick="ask('Give me savings tips')">Savings tips</button>
+    <button class="chip" onclick="ask('Analyse my top spending categories')">Top categories</button>
+    <button class="chip" onclick="ask('What is the 50/30/20 rule?')">50/30/20 rule</button>
+    <button class="chip" onclick="ask('How can I improve my health score?')">Improve health score</button>
+  </div>
+
+  <!-- Chat -->
+  <div class="card" style="margin-bottom:var(--sp-lg)">
+    <div class="chat-wrap">
+      <div class="chat-messages" id="chat-msgs">
+        <div class="msg">
+          <div class="msg-avi">♛</div>
+          <div class="msg-bubble">
+            <strong>Welcome, Your Majesty.</strong> I am your AI Financial Advisor — trained to analyse your spending data and guide you toward sovereign financial health.<br><br>
+            Ask me anything: budget breakdowns, savings strategies, what your numbers mean, or general financial wisdom.
+          </div>
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <input type="text" id="chat-input" placeholder="Ask your advisor anything..."
+          onkeydown="if(event.key==='Enter')sendFromInput()">
+        <button class="btn btn-gold" onclick="sendFromInput()">Ask ↗</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Knowledge Hub -->
+  <h2 style="margin-bottom:var(--sp-md)">Financial Knowledge Hub</h2>
+
+  <div class="video-big">
+    <iframe id="featured-video-container" src="https://www.youtube.com/embed/HQzoZfc3GwQ?rel=0&modestbranding=1"
+      title="How Money Works"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      allowfullscreen loading="lazy"></iframe>
+  </div>
+
+  <div class="fin-stats-row">
+    <div class="fin-stat"><div class="fin-stat-num">50%</div><div class="fin-stat-lbl">Needs (50/30/20)</div></div>
+    <div class="fin-stat"><div class="fin-stat-num">30%</div><div class="fin-stat-lbl">Wants (50/30/20)</div></div>
+    <div class="fin-stat"><div class="fin-stat-num">20%</div><div class="fin-stat-lbl">Savings (50/30/20)</div></div>
+    <div class="fin-stat"><div class="fin-stat-num">3–6×</div><div class="fin-stat-lbl">Emergency Fund months</div></div>
+  </div>
+
+  <div class="media-grid" id="knowledge-hub-grid">
+    <!-- Populated by media.js -->
+  </div>
+
+</div></main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (!requireAuth()) return;
+  updateNavAuth();
+  checkSpendingBanner();
+});
+
+function sendFromInput() {
+  const input = document.getElementById('chat-input');
+  const msg   = input.value.trim();
+  if (!msg) return;
+  input.value = '';
+  ask(msg);
+}
+
+function ask(userMsg) {
+  const msgs = document.getElementById('chat-msgs');
+
+  // User bubble
+  const uDiv = document.createElement('div');
+  uDiv.className = 'msg user';
+  uDiv.innerHTML = `<div class="msg-avi">U</div><div class="msg-bubble">${userMsg}</div>`;
+  msgs.appendChild(uDiv);
+
+  // Typing
+  const tDiv = document.createElement('div');
+  tDiv.className = 'msg';
+  tDiv.innerHTML = `<div class="msg-avi">♛</div><div class="msg-bubble"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;
+  msgs.appendChild(tDiv);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  setTimeout(() => {
+    tDiv.remove();
+    const resp = generateResponse(userMsg);
+    const aDiv = document.createElement('div');
+    aDiv.className = 'msg';
+    aDiv.innerHTML = `<div class="msg-avi">♛</div><div class="msg-bubble">${resp}</div>`;
+    msgs.appendChild(aDiv);
+    msgs.scrollTop = msgs.scrollHeight;
+  }, 800 + Math.random()*600);
+}
+
+function generateResponse(msg) {
+  const m   = msg.toLowerCase();
+  const ts  = DM.totalSpent(), bl = DM.budgetLeft(), pct = DM.percentUsed();
+  const hs  = DM.healthScore(), apd = DM.avgPerDay();
+  const cats = DM.categoryTotals();
+  const entries = Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+  const top = entries[0];
+
+  if (m.includes('budget')&&(m.includes('look')||m.includes('status')||m.includes('how'))) {
+    const s = pct<50?'in excellent shape':pct<80?'in good shape':pct<100?'getting tight':'exceeded';
+    return `Your budget is <strong>${s}</strong>.<br><br>Spent <strong>${fmt(ts)}</strong> (${fmtPct(pct)}) of your <strong>${fmt(DM.budget)}</strong> monthly budget — <strong>${fmt(bl)}</strong> remaining.<br><br>${pct>=100?'⛔ You\'ve gone over budget. Cut discretionary spending immediately.':pct>=80?'⚠ Close to your limit. Be mindful of upcoming expenses.':'✓ You\'re tracking well. Maintain this discipline.'}`;
+  }
+  if (m.includes('overspend')||m.includes('too much')||m.includes('where')) {
+    if (!entries.length) return 'No transactions yet. Add some expenses and I\'ll give you a breakdown.';
+    return `Your top spending categories:<ul>${entries.slice(0,3).map(([c,a])=>`<li><strong>${c}</strong>: ${fmt(a)}</li>`).join('')}</ul>${top?`<strong>${top[0]}</strong> dominates at ${fmt(top[1])} — consider whether this aligns with your priorities.`:''}`;
+  }
+  if (m.includes('saving')||m.includes('save')||m.includes('tip')) {
+    const sr = Math.max(0,(DM.budget-ts)/DM.budget*100);
+    return `Your current savings rate is <strong>${sr.toFixed(1)}%</strong>.<ul>
+      <li>Target <strong>20%</strong> savings (50/30/20 rule)</li>
+      ${top?`<li>Cutting <strong>${top[0]}</strong> spending by 10% saves ${fmt(top[1]*0.1)}/month</li>`:''}
+      <li>Automate savings on payday — gone before you spend it</li>
+      <li>Apply the <strong>24-hour rule</strong> on any purchase over $50</li>
+      <li>Audit subscriptions — the average person wastes $219/month on unused services</li></ul>`;
+  }
+  if (m.includes('health')||m.includes('score')||m.includes('improve')) {
+    const adv = hs>=80?'Excellent! Maintain your current habits.':hs>=60?'Good. Small improvements will push you higher.':'Focus on budget adherence first.';
+    return `Your health score is <strong>${hs}/100</strong>. ${adv}<br><br>Score breakdown:<ul>
+      <li><strong>Budget adherence</strong> (30 pts) — ${fmtPct(pct)} used</li>
+      <li><strong>Savings rate</strong> (25 pts) — ${Math.max(0,(DM.budget-ts)/DM.budget*100).toFixed(0)}% saved</li>
+      <li><strong>Category diversity</strong> (20 pts) — ${entries.length} categories</li>
+      <li><strong>Daily average</strong> (15 pts) — ${fmt(apd)}/day</li></ul>`;
+  }
+  if (m.includes('50')||m.includes('30')||m.includes('rule')) {
+    const est = DM.budget/0.5;
+    return `The <strong>50/30/20 Rule</strong> splits your income:<ul>
+      <li><strong>50% Needs</strong> — rent, food, transport (~${fmt(est*0.5)}/mo)</li>
+      <li><strong>30% Wants</strong> — dining, entertainment, shopping (~${fmt(est*0.3)}/mo)</li>
+      <li><strong>20% Savings</strong> — emergency fund, investments, debt (~${fmt(est*0.2)}/mo)</li></ul>
+      Based on your budget of ${fmt(DM.budget)}, your needs allocation should be <strong>${fmt(DM.budget*0.5)}</strong>/month.`;
+  }
+  if (m.includes('categor')||m.includes('breakdown')||m.includes('analys')) {
+    if (!entries.length) return 'No transactions yet. Add expenses to your dashboard first.';
+    return `Your spending breakdown:<ul>${entries.map(([c,a])=>`<li><strong>${c}</strong>: ${fmt(a)} (${Math.round(a/ts*100)}%)</li>`).join('')}</ul>Total: <strong>${fmt(ts)}</strong> across ${entries.length} categories.`;
+  }
+  if (m.includes('hello')||m.includes('hi')||m.includes('hey')) {
+    return `Greetings, ${Auth.user?.name||'Sovereign'}! Snapshot today: spent <strong>${fmt(ts)}</strong> of <strong>${fmt(DM.budget)}</strong> (${fmtPct(pct)}), health score <strong>${hs}/100</strong>. What would you like to explore?`;
+  }
+  return `Based on your data:<ul>
+    <li>Budget used: <strong>${fmtPct(pct)}</strong> (${fmt(ts)} of ${fmt(DM.budget)})</li>
+    <li>Remaining: <strong>${fmt(bl)}</strong></li>
+    <li>Health score: <strong>${hs}/100</strong></li>
+    ${top?`<li>Top category: <strong>${top[0]}</strong> at ${fmt(top[1])}</li>`:''}
+    </ul>Try: <em>how is my budget, where am I overspending, or give me savings tips.</em>`;
+}
+</script>
+</body>
+</html>

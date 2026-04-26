@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reports — NOBLEKEEP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/global.css">
+<link rel="stylesheet" href="css/pages.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="js/data.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/nav.js"></script>
+<style>
+.reports-kpi { display:grid; grid-template-columns:repeat(4,1fr); gap:var(--sp-sm); margin-bottom:var(--sp-md); }
+.r-kpi { background:var(--bg1); border:1px solid var(--border); border-radius:var(--r-lg); padding:1.1rem 1.25rem; }
+.r-kpi:hover { border-color:var(--gold-border); }
+.r-kpi-val { font-family:var(--font-mono); font-size:1.5rem; font-weight:500; color:var(--gold); line-height:1; }
+.r-kpi-lbl { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text3); margin-top:5px; font-weight:600; }
+.r-kpi.green .r-kpi-val { color:var(--success); }
+.r-kpi.red   .r-kpi-val { color:var(--danger); }
+.charts-quad { display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-md); margin-bottom:var(--sp-md); }
+.insight-strip { display:grid; grid-template-columns:repeat(2,1fr); gap:var(--sp-sm); margin-bottom:var(--sp-md); }
+.ins { background:var(--bg1); border:1px solid var(--border); border-radius:var(--r-lg); padding:1.1rem 1.25rem; }
+.ins:hover { border-color:var(--gold-border); }
+.ins-lbl { font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:var(--text3); margin-bottom:5px; font-weight:600; }
+.ins-val { font-family:var(--font-display); font-size:1.1rem; font-weight:500; color:var(--text); }
+.ins-desc { font-size:12px; color:var(--text2); margin-top:3px; line-height:1.55; }
+.tx-table-wrap { background:var(--bg1); border:1px solid var(--border); border-radius:var(--r-lg); overflow:hidden; }
+@media(max-width:900px) { .charts-quad,.insight-strip,.reports-kpi { grid-template-columns:1fr 1fr; } }
+@media(max-width:560px) { .charts-quad,.insight-strip,.reports-kpi { grid-template-columns:1fr; } }
+</style>
+</head>
+<body style="padding-top:var(--nav-h)">
+<main><div class="container">
+
+  <div class="page-header">
+    <h1>Royal Financial Reports</h1>
+    <p>Deep analysis of your kingdom's wealth and spending patterns.</p>
+  </div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:var(--sp-md)">
+    <button class="btn btn-gold"    onclick="dlReport('csv')">↓ Download CSV</button>
+    <button class="btn btn-outline" onclick="dlReport('json')">↓ Export JSON</button>
+    <button class="btn btn-outline" onclick="dlReport('pdf')">↓ Print Report</button>
+  </div>
+
+  <!-- KPI strip -->
+  <div class="reports-kpi">
+    <div class="r-kpi"><div class="r-kpi-val" id="r-total">—</div><div class="r-kpi-lbl">Total Spent</div></div>
+    <div class="r-kpi" id="r-left-card"><div class="r-kpi-val" id="r-left">—</div><div class="r-kpi-lbl">Budget Left</div></div>
+    <div class="r-kpi"><div class="r-kpi-val" id="r-hs">—</div><div class="r-kpi-lbl">Health Score</div></div>
+    <div class="r-kpi"><div class="r-kpi-val" id="r-avg">—</div><div class="r-kpi-lbl">Daily Average</div></div>
+  </div>
+
+  <!-- 4 Charts -->
+  <div class="charts-quad">
+    <div class="card">
+      <div class="card-title">Spending by Category</div>
+      <div id="r-cat-wrap"><canvas id="r-cat" height="240"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Category Breakdown (Bar)</div>
+      <div id="r-bar-wrap"><canvas id="r-bar" height="240"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Monthly Spending Trend</div>
+      <div id="r-trend-wrap"><canvas id="r-trend" height="200"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Budget Usage</div>
+      <canvas id="r-gauge" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- Insights strip -->
+  <div class="insight-strip">
+    <div class="ins"><div class="ins-lbl">Budget Performance</div><div class="ins-val" id="r-perf">—</div><div class="ins-desc" id="r-perf-desc">—</div></div>
+    <div class="ins"><div class="ins-lbl">Top Spending Category</div><div class="ins-val" id="r-top">—</div><div class="ins-desc" id="r-top-desc">—</div></div>
+    <div class="ins"><div class="ins-lbl">Savings &amp; Investment</div><div class="ins-val" id="r-savings">—</div><div class="ins-desc" id="r-savings-desc">—</div></div>
+    <div class="ins"><div class="ins-lbl">Projected Monthly</div><div class="ins-val" id="r-proj">—</div><div class="ins-desc" id="r-proj-desc">—</div></div>
+  </div>
+
+  <!-- Full transaction list -->
+  <div class="card">
+    <div class="card-title">All Transactions</div>
+    <div class="table-wrap" style="border:none;border-top:1px solid var(--border);border-radius:0 0 var(--r-lg) var(--r-lg)">
+      <table><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th></tr></thead>
+      <tbody id="r-tx-body"></tbody></table>
+    </div>
+    <p id="r-no-tx" style="text-align:center;padding:2rem;color:var(--text3);font-size:13px;display:none">No transactions yet.</p>
+  </div>
+
+</div></main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  if (!requireAuth()) return;
+  updateNavAuth();
+
+  const ts=DM.totalSpent(), bl=DM.budgetLeft(), pct=DM.percentUsed(),
+        hs=DM.healthScore(), apd=DM.avgPerDay();
+  const cats=DM.categoryTotals();
+  const entries=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+
+  // KPIs
+  const set=(id,v)=>{const el=document.getElementById(id);if(el)el.textContent=v;};
+  set('r-total', fmt(ts));
+  set('r-left',  fmt(bl));
+  document.getElementById('r-left-card').className='r-kpi'+(bl<0?' red':bl<DM.budget*.2?' ':'green');
+  set('r-hs',    hs+' / 100');
+  set('r-avg',   fmt(apd));
+
+  // Chart 1 — Doughnut
+  makeDoughnut('r-cat', cats);
+
+  // Chart 2 — Horizontal bar by category
+  if(entries.length){makeBar('r-bar', entries.map(e=>e[0]), entries.map(e=>e[1]));}
+  else{const el=document.getElementById('r-bar-wrap');if(el)el.innerHTML='<p style="color:var(--text3);font-size:13px;text-align:center;padding:2rem">No data yet.</p>';}
+
+  // Chart 3 — Trend line
+  const trend=buildMonthlyTrend();
+  makeLine('r-trend', trend.labels, trend.data);
+
+  // Chart 4 — Budget gauge (doughnut)
+  const used=Math.min(pct,100), remaining=Math.max(0,100-pct);
+  Charts.make('r-gauge',{
+    type:'doughnut',
+    data:{labels:['Used','Remaining'],datasets:[{data:[used,remaining],backgroundColor:[pct>=100?'#C0392B':pct>=80?'#D68910':'#BFA060','var(--bg3)'],borderWidth:0}]},
+    options:{responsive:true,cutout:'72%',plugins:{legend:{position:'bottom',labels:{color:chartColors().legend,font:{family:'Outfit',size:11},padding:12,boxWidth:10}},tooltip:{callbacks:{label:c=>` ${Math.round(c.raw)}%`}}}}
+  });
+
+  // Insights
+  set('r-perf', fmtPct(pct)+' used');
+  set('r-perf-desc', pct<=80?'Excellent discipline — well within budget.':pct<=100?'Approaching limit — watch spending carefully.':'Over budget this period. Review and cut back.');
+
+  if(entries.length){
+    const top=entries[0];
+    set('r-top',      top[0]);
+    set('r-top-desc', fmt(top[1])+' — '+Math.round(top[1]/ts*100)+'% of total spending.');
+  } else {
+    set('r-top','—'); set('r-top-desc','No transactions yet.');
+  }
+
+  // Savings + Investment
+  const savedAmt = (cats['Savings']||0)+(cats['Investment']||0);
+  const savePct  = ts>0?Math.round(savedAmt/ts*100):0;
+  set('r-savings', fmt(savedAmt));
+  set('r-savings-desc', `${savePct}% of total spending goes toward savings & investment.${savedAmt===0?' Consider adding Savings or Investment transactions.':''}`);
+
+  set('r-proj',      fmt(apd*30));
+  set('r-proj-desc', `At ${fmt(apd)}/day, you'll spend ${fmt(apd*30)} this month. Budget: ${fmt(DM.budget)}.`);
+
+  // Full tx list
+  const tbody = document.getElementById('r-tx-body');
+  const noTx  = document.getElementById('r-no-tx');
+  if(!DM.transactions.length){ noTx.style.display='block'; return; }
+  noTx.style.display='none';
+  DM.transactions.forEach(tx=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td style="color:var(--text3);font-size:12px;white-space:nowrap">${tx.date}</td>
+      <td>${categoryBadge(tx.category)}</td>
+      <td style="color:var(--text2)">${tx.description||'—'}</td>
+      <td class="mono">${fmt(tx.amount)}</td>`;
+    tbody.appendChild(tr);
+  });
+
+  checkSpendingBanner();
+});
+
+function dlReport(format){
+  const ts2=new Date().toISOString().split('T')[0];
+  let content,filename,mime;
+  if(format==='csv'){
+    const rows=[['Date','Category','Description','Amount']];
+    DM.transactions.forEach(t=>rows.push([t.date,t.category,t.description||'',t.amount]));
+    content=rows.map(r=>r.map(f=>`"${f}"`).join(',')).join('\n');
+    filename=`noblekeep-${ts2}.csv`;mime='text/csv';
+  }else if(format==='json'){
+    content=JSON.stringify({transactions:DM.transactions,budget:DM.budget,totalSpent:DM.totalSpent(),healthScore:DM.healthScore(),exportDate:new Date().toISOString()},null,2);
+    filename=`noblekeep-${ts2}.json`;mime='application/json';
+  }else{
+    const cats=DM.categoryTotals();
+    content=`<!DOCTYPE html><html><head><title>NobleKeep Report ${ts2}</title>
+<style>body{font-family:Georgia,serif;margin:2cm;color:#1a1714}h1{font-size:2rem;border-bottom:2px solid #BFA060;padding-bottom:.5rem;margin-bottom:1.5rem}
+.stats{display:flex;gap:1rem;margin-bottom:2rem}.stat{flex:1;border:1px solid #ddd;padding:1rem;text-align:center}
+.stat-v{font-size:1.8rem;font-weight:bold;color:#BFA060}.row{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid #eee}
+@media print{body{margin:1cm}}</style></head><body>
+<h1>♛ NOBLEKEEP Financial Report</h1><p>Generated: ${new Date().toLocaleString()}</p>
+<div class="stats">
+<div class="stat"><div class="stat-v">${fmt(DM.totalSpent())}</div>Total Spent</div>
+<div class="stat"><div class="stat-v">${fmt(DM.budgetLeft())}</div>Budget Left</div>
+<div class="stat"><div class="stat-v">${DM.percentUsed()}%</div>Budget Used</div>
+<div class="stat"><div class="stat-v">${DM.healthScore()}</div>Health Score</div></div>
+<h2>Spending by Category</h2>${Object.entries(cats).map(([c,a])=>`<div class="row"><span>${c}</span><span>${fmt(a)}</span></div>`).join('')}
+<h2>All Transactions</h2><table style="width:100%;border-collapse:collapse">
+<thead><tr><th style="text-align:left;padding:6px;border-bottom:2px solid #BFA060">Date</th><th style="text-align:left;padding:6px;border-bottom:2px solid #BFA060">Category</th><th style="text-align:left;padding:6px;border-bottom:2px solid #BFA060">Description</th><th style="text-align:right;padding:6px;border-bottom:2px solid #BFA060">Amount</th></tr></thead>
+<tbody>${DM.transactions.map(t=>`<tr><td style="padding:6px;border-bottom:1px solid #eee">${t.date}</td><td style="padding:6px;border-bottom:1px solid #eee">${t.category}</td><td style="padding:6px;border-bottom:1px solid #eee">${t.description||''}</td><td style="padding:6px;border-bottom:1px solid #eee;text-align:right">${fmt(t.amount)}</td></tr>`).join('')}
+</tbody></table>
+<p style="margin-top:2rem;text-align:center;color:#999;font-size:.8rem">© 2026 NOBLEKEEP — Developed by Sujan Karki</p></body></html>`;
+    filename=`noblekeep-report-${ts2}.html`;mime='text/html';
+  }
+  const blob=new Blob([content],{type:mime}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);
+  toast('Report downloaded.');
+}
+</script>
+</body>
+</html>

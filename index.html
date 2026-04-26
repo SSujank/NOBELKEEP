@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOBLEKEEP — Sovereign Wealth Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,700;1,500&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/global.css">
+<link rel="stylesheet" href="css/pages.css">
+<script src="js/data.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/nav.js"></script>
+</head>
+<body style="padding-top:var(--nav-h)">
+
+<main>
+<div class="container">
+  <div class="hero">
+    <div class="hero-grid">
+
+      <!-- Left -->
+      <div>
+        <div class="hero-eyebrow">Personal Finance, Elevated</div>
+        <h1>Rule Your <em>Finances</em><br>Like a True Sovereign</h1>
+        <p class="hero-sub">Track expenses, set budgets, and grow your wealth with an elegant interface designed for clarity, control, and confidence.</p>
+        <div class="hero-actions">
+          <a href="signup.html" class="btn btn-lg btn-gold">Claim Your Throne</a>
+          <a href="login.html"  class="btn btn-lg btn-outline">Sign In</a>
+        </div>
+      </div>
+
+      <!-- Right — preview card -->
+      <div class="hero-visual">
+        <div class="preview-back"></div>
+        <div class="preview-card">
+          <div class="pc-label">Monthly Budget</div>
+          <div class="pc-amount">$947.49</div>
+          <div class="pc-bar"><div class="pc-fill"></div></div>
+          <div class="pc-pct">63% of $1,500.00 used</div>
+          <div class="pc-rows">
+            <div class="pc-row"><span class="pc-cat">Food &amp; Dining</span><span class="pc-val">$342.50</span></div>
+            <div class="pc-row"><span class="pc-cat">Transportation</span><span class="pc-val">$215.00</span></div>
+            <div class="pc-row"><span class="pc-cat">Shopping</span><span class="pc-val">$389.99</span></div>
+          </div>
+          <div class="pc-badge">Health Score: 78 / 100</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Feature strip -->
+  <div class="features-strip">
+    <div class="feat-card">
+      <div class="feat-icon">♛</div>
+      <h3>Full Control</h3>
+      <p>Add, edit, and delete transactions with ease. Set budgets and track every penny of your treasury.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">◈</div>
+      <h3>AI Advisor</h3>
+      <p>Your personal AI financial counsel — budget analysis, savings tips, and spending insights on demand.</p>
+    </div>
+    <div class="feat-card">
+      <div class="feat-icon">⬡</div>
+      <h3>Smart Alerts</h3>
+      <p>Category budget limits and spending alerts warn you before you overshoot — not after.</p>
+    </div>
+  </div>
+</div>
+</main>
+
+<script>
+  // Redirect logged-in users directly to throne/dashboard
+  document.addEventListener('DOMContentLoaded', () => {
+    if (Auth.loggedIn) window.location.replace('dashboard.html');
+  });
+</script>
+</body>
+</html>
