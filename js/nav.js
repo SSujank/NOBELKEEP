@@ -4,7 +4,7 @@ const page=(window.location.pathname.split('/').pop().replace('.html','')||'inde
 if(localStorage.getItem('nk_theme')==='light'){document.documentElement.classList.add('light');document.body&&document.body.classList.add('light');}
 
 const authLinks=[
-  {id:'dashboard',label:'dashboard',href:'dashboard.html',cls:'auth-show'},
+  {id:'dashboard',label:'Dashboard',href:'dashboard.html',cls:'auth-show'},
   {id:'reports',label:'Reports',href:'reports.html',cls:'auth-show'},
   {id:'treasury',label:'Treasury',href:'treasury.html',cls:'auth-show'},
   {id:'ai',label:'AI Advisor',href:'ai.html',cls:'auth-show'},
